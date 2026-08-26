@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chocolate Wheel Venue Settings</title>
+<style>
+  :root {
+    color-scheme: dark;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #101018;
+    color: #f6f2e8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at top left, #302050, #101018 60%);
+  }
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 28px 18px 60px;
+  }
+  h1 { margin: 0 0 4px; font-size: 1.5rem; }
+  h2 { margin: 26px 0 10px; font-size: 1.05rem; color: #ffd95a; }
+  p.hint { margin: 0 0 16px; color: #bfb7ac; font-size: 0.86rem; line-height: 1.4; }
+  .card {
+    background: rgba(10, 10, 18, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 18px;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+    padding: 22px;
+    margin-top: 18px;
+  }
+  label { display: grid; gap: 6px; margin: 10px 0; font-size: 0.88rem; color: #e9e2d8; }
+  input, button {
+    font: inherit;
+    border-radius: 10px;
+  }
+  input {
+    width: 100%;
+    padding: 9px 10px;
+    background: #191923;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #fff;
+    outline: none;
+  }
+  input:focus { border-color: #ffd95a; box-shadow: 0 0 0 3px rgba(255, 217, 90, 0.16); }
+  input[type="color"] { padding: 3px; height: 40px; cursor: pointer; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .prize-list { display: grid; gap: 8px; }
+  .prize-row { display: grid; grid-template-columns: 72px 1fr; gap: 8px; align-items: center; }
+  .prize-row span { color: #bfb7ac; font-size: 0.82rem; }
+  .color-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; margin-bottom: 8px; }
+  .color-row label { margin: 0; }
+  .color-row button { padding: 8px 10px; height: 40px; }
+  button {
+    cursor: pointer;
+    border: 0;
+    padding: 12px 14px;
+    background: #ffd95a;
+    color: #17120a;
+    font-weight: 700;
+  }
+  button.secondary { background: #282838; color: #f6f2e8; border: 1px solid rgba(255,255,255,0.14); }
+  button.small { padding: 8px 10px; font-size: 0.82rem; }
+  .buttons { display: grid; gap: 10px; margin-top: 20px; }
+  .status {
+    margin-top: 14px;
+    padding: 10px;
+    border-radius: 12px;
+    background: rgba(255, 217, 90, 0.12);
+    color: #fff5c7;
+    font-size: 0.86rem;
+    min-height: 20px;
+  }
+  .status.error { background: rgba(255, 90, 90, 0.16); color: #ffd6d6; }
+  #appSection, #passwordSection, #errorSection { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Chocolate Wheel — Venue Settings</h1>
+  <p class="hint">Adjust the settings below, then click Update Settings. The game picks up the new settings the next time it's reloaded. Bookmark this page's link (with the long code in the address bar) to come back to it later.</p>
+
+  <section id="errorSection" class="card">
+    <h2 style="margin-top:0">Link Not Recognized</h2>
+    <p class="hint">This page needs the special link your operator gave you - it should have a long code after <code>?token=</code> in the address bar. Please use that link instead of this bare page address.</p>
+  </section>
+
+  <section id="passwordSection" class="card">
+    <h2 style="margin-top:0">Enter Password</h2>
+    <label>Password
+      <input id="passwordInput" type="password" autocomplete="current-password" />
+    </label>
+    <div class="buttons">
+      <button id="unlockButton" type="button">Unlock</button>
+    </div>
+    <div id="passwordStatus" class="status">Ask your operator if you don't have this.</div>
+  </section>
+
+  <section id="appSection">
+    <div class="card">
+      <h2 style="margin-top:0">Venue Name</h2>
+      <label>Shown only here, for your own reference
+        <input id="venueName" type="text" />
+      </label>
+      <div id="lastUpdatedDisplay" style="color:#bfb7ac; font-size:0.8rem;"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Normal Wheel</h2>
+      <label>Number of slices
+        <input id="normalSliceCount" type="number" min="2" max="64" step="1" />
+      </label>
+      <h2>Prize amounts</h2>
+      <div id="normalPrizes" class="prize-list"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Bonus Wheel</h2>
+      <label>Number of slices
+        <input id="bonusSliceCount" type="number" min="2" max="64" step="1" />
+      </label>
+      <h2>Prize amounts</h2>
+      <div id="bonusPrizes" class="prize-list"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Truffle Shuffle</h2>
+      <p class="hint">Each round, a random number of normal wheel slices (between these two numbers) will trigger the Truffle Shuffle bonus feature.</p>
+      <div class="row">
+        <label>Minimum (1-9)
+          <input id="featureMin" type="number" min="1" max="9" step="1" />
+        </label>
+        <label>Maximum (1-9)
+          <input id="featureMax" type="number" min="1" max="9" step="1" />
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Normal Wheel Colors</h2>
+      <p class="hint">Slices cycle through these colors in order. Add more for a wider mix, or leave just one for a single solid color.</p>
+      <div id="normalColors"></div>
+      <button id="addNormalColor" class="secondary small" type="button">+ Add Color</button>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Bonus Wheel Colors</h2>
+      <div id="bonusColors"></div>
+      <button id="addBonusColor" class="secondary small" type="button">+ Add Color</button>
+    </div>
+
+    <div class="buttons">
+      <button id="saveButton" type="button">Update Settings</button>
+    </div>
+    <div id="appStatus" class="status">Loading your settings…</div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Win History</h2>
+      <p class="hint">Downloads a text file listing every win recorded on this game, with the date/time and what was won.</p>
+      <div class="buttons">
+        <button id="downloadWinsButton" class="secondary" type="button">Download Win History (.txt)</button>
+      </div>
+      <div id="winsStatus" class="status">Not downloaded yet.</div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Safe to keep public - the token in this page's own URL is what actually grants access to a
+  // single venue's row (see schema.sql). This key alone can't read, list, or write anything.
+  const SUPABASE_URL = "https://xpohcgckobjkhviwieaa.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_iFct0vg6iXTVVUR8j4LjaQ_MWBUuITw";
+
+  const token = new URLSearchParams(window.location.search).get("token");
+  let currentPassword = "";
+
+  const errorSection = document.getElementById("errorSection");
+  const passwordSection = document.getElementById("passwordSection");
+  const appSection = document.getElementById("appSection");
+  const passwordInput = document.getElementById("passwordInput");
+  const unlockButton = document.getElementById("unlockButton");
+  const passwordStatus = document.getElementById("passwordStatus");
+  const appStatus = document.getElementById("appStatus");
+  const saveButton = document.getElementById("saveButton");
+  const downloadWinsButton = document.getElementById("downloadWinsButton");
+  const winsStatus = document.getElementById("winsStatus");
+  const lastUpdatedDisplay = document.getElementById("lastUpdatedDisplay");
+  const venueNameInput = document.getElementById("venueName");
+  const normalSliceCountInput = document.getElementById("normalSliceCount");
+  const bonusSliceCountInput = document.getElementById("bonusSliceCount");
+  const normalPrizesEl = document.getElementById("normalPrizes");
+  const bonusPrizesEl = document.getElementById("bonusPrizes");
+  const featureMinInput = document.getElementById("featureMin");
+  const featureMaxInput = document.getElementById("featureMax");
+  const normalColorsEl = document.getElementById("normalColors");
+  const bonusColorsEl = document.getElementById("bonusColors");
+
+  const DEFAULTS = {
+    venueName: "New Venue",
+    normalSliceCount: 12,
+    bonusSliceCount: 8,
+    normalPrizes: ["$10","$20","$30","$40","$50","$60","$70","$80","$90","$100","$150","$200"],
+    bonusPrizes: ["$50","$75","$100","$150","$200","$250","$300","$500"],
+    featureSliceCountMin: 1,
+    featureSliceCountMax: 3,
+    normalColors: [{outer:"#C70D14", inner:"#1F0305"}, {outer:"#123A6B", inner:"#04101F"}],
+    bonusColors: [{outer:"#B8860B", inner:"#2A1E03"}, {outer:"#4B0082", inner:"#0F0320"}]
+  };
+
+  async function callRpc(functionName, body) {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${functionName}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": "Bearer " + SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify(body)
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Request failed (${response.status}): ${text}`);
+    }
+    return response.json();
+  }
+
+  function setStatus(message, isError) {
+    appStatus.textContent = message;
+    appStatus.classList.toggle("error", !!isError);
+  }
+
+  function clampCount(value, lo, hi) {
+    const parsed = parseInt(value, 10);
+    if (!Number.isFinite(parsed)) return lo;
+    return Math.max(lo, Math.min(hi, parsed));
+  }
+
+  function defaultPrize(index, isBonus) {
+    return isBonus ? ("$" + ((index + 1) * 25)) : ("$" + ((index + 1) * 10));
+  }
+
+  function getPrizeValues(container) {
+    return Array.from(container.querySelectorAll("input")).map((input) => input.value.trim());
+  }
+
+  function renderPrizeInputs(container, count, existingValues, isBonus) {
+    container.innerHTML = "";
+    for (let i = 0; i < count; i++) {
+      const row = document.createElement("label");
+      row.className = "prize-row";
+      const label = document.createElement("span");
+      label.textContent = "Slice " + (i + 1);
+      const input = document.createElement("input");
+      input.value = (existingValues && existingValues[i]) || defaultPrize(i, isBonus);
+      row.appendChild(label);
+      row.appendChild(input);
+      container.appendChild(row);
+    }
+  }
+
+  function rebuildPrizeList(countInput, container, isBonus) {
+    const existing = getPrizeValues(container);
+    const count = clampCount(countInput.value, 2, 64);
+    countInput.value = count;
+    renderPrizeInputs(container, count, existing, isBonus);
+  }
+
+  function getColorValues(container) {
+    return Array.from(container.querySelectorAll(".color-row")).map((row) => ({
+      outer: row.querySelector(".outer-input").value,
+      inner: row.querySelector(".inner-input").value
+    }));
+  }
+
+  function addColorRow(container, outer, inner) {
+    const row = document.createElement("div");
+    row.className = "color-row";
+
+    const outerLabel = document.createElement("label");
+    outerLabel.textContent = "Outer";
+    const outerInput = document.createElement("input");
+    outerInput.type = "color";
+    outerInput.className = "outer-input";
+    outerInput.value = outer || "#C70D14";
+    outerLabel.appendChild(outerInput);
+
+    const innerLabel = document.createElement("label");
+    innerLabel.textContent = "Inner";
+    const innerInput = document.createElement("input");
+    innerInput.type = "color";
+    innerInput.className = "inner-input";
+    innerInput.value = inner || "#1F0305";
+    innerLabel.appendChild(innerInput);
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "secondary";
+    removeButton.textContent = "Remove";
+    removeButton.addEventListener("click", () => row.remove());
+
+    row.appendChild(outerLabel);
+    row.appendChild(innerLabel);
+    row.appendChild(removeButton);
+    container.appendChild(row);
+  }
+
+  function renderColorRows(container, colors) {
+    container.innerHTML = "";
+    (colors && colors.length ? colors : DEFAULTS.normalColors).forEach((c) => addColorRow(container, c.outer, c.inner));
+  }
+
+  function populateForm(data) {
+    const s = data || DEFAULTS;
+    venueNameInput.value = s.venueName || DEFAULTS.venueName;
+    lastUpdatedDisplay.textContent = s.updatedAt ? ("Last updated " + new Date(s.updatedAt).toLocaleString()) : "";
+
+    normalSliceCountInput.value = clampCount(s.normalSliceCount || DEFAULTS.normalSliceCount, 2, 64);
+    bonusSliceCountInput.value = clampCount(s.bonusSliceCount || DEFAULTS.bonusSliceCount, 2, 64);
+    renderPrizeInputs(normalPrizesEl, parseInt(normalSliceCountInput.value, 10), s.normalPrizes || DEFAULTS.normalPrizes, false);
+    renderPrizeInputs(bonusPrizesEl, parseInt(bonusSliceCountInput.value, 10), s.bonusPrizes || DEFAULTS.bonusPrizes, true);
+
+    featureMinInput.value = clampCount(s.featureSliceCountMin || DEFAULTS.featureSliceCountMin, 1, 9);
+    featureMaxInput.value = clampCount(s.featureSliceCountMax || DEFAULTS.featureSliceCountMax, 1, 9);
+
+    renderColorRows(normalColorsEl, s.normalColors || DEFAULTS.normalColors);
+    renderColorRows(bonusColorsEl, s.bonusColors || DEFAULTS.bonusColors);
+  }
+
+  async function loadSettings() {
+    setStatus("Loading your settings…", false);
+    try {
+      const data = await callRpc("get_venue_settings_for_web", { token, password: currentPassword });
+      if (!data) {
+        setStatus("Could not load settings - the link or password may be wrong.", true);
+        return;
+      }
+      populateForm(data);
+      setStatus("Settings loaded.", false);
+    } catch (error) {
+      setStatus("Could not load settings: " + error.message, true);
+    }
+  }
+
+  async function saveSettings() {
+    saveButton.disabled = true;
+    setStatus("Saving…", false);
+
+    let featureMin = clampCount(featureMinInput.value, 1, 9);
+    let featureMax = clampCount(featureMaxInput.value, 1, 9);
+    if (featureMax < featureMin) featureMax = featureMin;
+    featureMinInput.value = featureMin;
+    featureMaxInput.value = featureMax;
+
+    const normalCount = clampCount(normalSliceCountInput.value, 2, 64);
+    const bonusCount = clampCount(bonusSliceCountInput.value, 2, 64);
+
+    const settings = {
+      venueName: venueNameInput.value.trim() || DEFAULTS.venueName,
+      normalSliceCount: normalCount,
+      bonusSliceCount: bonusCount,
+      normalPrizes: getPrizeValues(normalPrizesEl).slice(0, normalCount),
+      bonusPrizes: getPrizeValues(bonusPrizesEl).slice(0, bonusCount),
+      featureSliceCountMin: featureMin,
+      featureSliceCountMax: featureMax,
+      normalColors: getColorValues(normalColorsEl),
+      bonusColors: getColorValues(bonusColorsEl)
+    };
+
+    try {
+      const data = await callRpc("update_venue_settings_by_token", { token, password: currentPassword, settings });
+      if (!data) {
+        setStatus("Save failed - the link or password may be wrong.", true);
+        return;
+      }
+      populateForm(data);
+      setStatus("Settings updated. Reload the game to apply them.", false);
+    } catch (error) {
+      setStatus("Save failed: " + error.message, true);
+    } finally {
+      saveButton.disabled = false;
+    }
+  }
+
+  function downloadTextFile(fileName, text) {
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  async function downloadWinHistory() {
+    downloadWinsButton.disabled = true;
+    winsStatus.textContent = "Fetching win history…";
+    winsStatus.classList.remove("error");
+    try {
+      const wins = await callRpc("get_wins_for_web", { token, password: currentPassword });
+      if (!wins) {
+        winsStatus.textContent = "Could not fetch win history - the link or password may be wrong.";
+        winsStatus.classList.add("error");
+        return;
+      }
+      if (wins.length === 0) {
+        winsStatus.textContent = "No wins recorded yet.";
+        return;
+      }
+
+      const lines = wins.map((w) => {
+        const when = new Date(w.wonAt).toLocaleString();
+        const category = w.category ? ` (${w.category})` : "";
+        return `${when}  -  ${w.prize}${category}`;
+      });
+      const header = `Chocolate Wheel - Win History\nGenerated: ${new Date().toLocaleString()}\nTotal wins: ${wins.length}\n\n`;
+      downloadTextFile(`WinHistory_${Date.now()}.txt`, header + lines.join("\n"));
+      winsStatus.textContent = `Downloaded ${wins.length} wins.`;
+    } catch (error) {
+      winsStatus.textContent = "Could not fetch win history: " + error.message;
+      winsStatus.classList.add("error");
+    } finally {
+      downloadWinsButton.disabled = false;
+    }
+  }
+
+  function showApp() {
+    passwordSection.style.display = "none";
+    appSection.style.display = "block";
+    loadSettings();
+  }
+
+  async function unlock() {
+    unlockButton.disabled = true;
+    passwordStatus.textContent = "Checking…";
+    passwordStatus.classList.remove("error");
+    currentPassword = passwordInput.value;
+    try {
+      const data = await callRpc("get_venue_settings_for_web", { token, password: currentPassword });
+      if (!data) {
+        passwordStatus.textContent = "Incorrect password.";
+        passwordStatus.classList.add("error");
+        return;
+      }
+      showApp();
+    } catch (error) {
+      passwordStatus.textContent = "Could not check password: " + error.message;
+      passwordStatus.classList.add("error");
+    } finally {
+      unlockButton.disabled = false;
+    }
+  }
+
+  saveButton.addEventListener("click", saveSettings);
+  downloadWinsButton.addEventListener("click", downloadWinHistory);
+  unlockButton.addEventListener("click", unlock);
+  passwordInput.addEventListener("keydown", (event) => { if (event.key === "Enter") unlockButton.click(); });
+  normalSliceCountInput.addEventListener("change", () => rebuildPrizeList(normalSliceCountInput, normalPrizesEl, false));
+  bonusSliceCountInput.addEventListener("change", () => rebuildPrizeList(bonusSliceCountInput, bonusPrizesEl, true));
+  document.getElementById("addNormalColor").addEventListener("click", () => addColorRow(normalColorsEl, "#C70D14", "#1F0305"));
+  document.getElementById("addBonusColor").addEventListener("click", () => addColorRow(bonusColorsEl, "#B8860B", "#2A1E03"));
+
+  async function start() {
+    if (!token) {
+      errorSection.style.display = "block";
+      return;
+    }
+    try {
+      const requiresPassword = await callRpc("venue_requires_password", { token });
+      if (requiresPassword) {
+        passwordSection.style.display = "block";
+      } else {
+        showApp();
+      }
+    } catch (error) {
+      errorSection.style.display = "block";
+    }
+  }
+
+  start();
+</script>
+</body>
+</html>
