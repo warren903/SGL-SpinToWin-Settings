@@ -142,6 +142,19 @@
           <input id="featureMax" type="number" min="1" max="9" step="1" />
         </label>
       </div>
+      <p class="hint">Turn any of these off to remove that outcome entirely - the remaining ticked ones share the chance.</p>
+      <label style="display:flex; align-items:center; gap:8px; flex-direction:row;">
+        <input id="truffleMultiplierEnabled" type="checkbox" style="width:auto;" />
+        <span>Multiplier</span>
+      </label>
+      <label style="display:flex; align-items:center; gap:8px; flex-direction:row;">
+        <input id="truffleRespinEnabled" type="checkbox" style="width:auto;" />
+        <span>Respin</span>
+      </label>
+      <label style="display:flex; align-items:center; gap:8px; flex-direction:row;">
+        <input id="truffleRespinPlusEnabled" type="checkbox" style="width:auto;" />
+        <span>Respin Plus</span>
+      </label>
     </div>
 
 
@@ -240,6 +253,9 @@
   const bonusPrizesEl = document.getElementById("bonusPrizes");
   const featureMinInput = document.getElementById("featureMin");
   const featureMaxInput = document.getElementById("featureMax");
+  const truffleMultiplierEnabledInput = document.getElementById("truffleMultiplierEnabled");
+  const truffleRespinEnabledInput = document.getElementById("truffleRespinEnabled");
+  const truffleRespinPlusEnabledInput = document.getElementById("truffleRespinPlusEnabled");
   const demoModeEnabledInput = document.getElementById("demoModeEnabled");
   const demoModeSpinCountInput = document.getElementById("demoModeSpinCount");
 
@@ -253,6 +269,9 @@
     bonusPrizes: ["$1000","$500","$1000","$500"],
     featureSliceCountMin: 3,
     featureSliceCountMax: 3,
+    truffleMultiplierEnabled: true,
+    truffleRespinEnabled: true,
+    truffleRespinPlusEnabled: true,
     demoModeEnabled: false,
     demoModeSpinCount: 20
   };
@@ -330,6 +349,13 @@
 
     // false is a real, meaningful value here (not "missing"), so this can't use the `||` shortcut the
     // fields above use - that would wrongly fall back to the default the moment it's turned off.
+    truffleMultiplierEnabledInput.checked = (s.truffleMultiplierEnabled !== undefined && s.truffleMultiplierEnabled !== null)
+      ? !!s.truffleMultiplierEnabled : !!DEFAULTS.truffleMultiplierEnabled;
+    truffleRespinEnabledInput.checked = (s.truffleRespinEnabled !== undefined && s.truffleRespinEnabled !== null)
+      ? !!s.truffleRespinEnabled : !!DEFAULTS.truffleRespinEnabled;
+    truffleRespinPlusEnabledInput.checked = (s.truffleRespinPlusEnabled !== undefined && s.truffleRespinPlusEnabled !== null)
+      ? !!s.truffleRespinPlusEnabled : !!DEFAULTS.truffleRespinPlusEnabled;
+
     demoModeEnabledInput.checked = (s.demoModeEnabled !== undefined && s.demoModeEnabled !== null)
       ? !!s.demoModeEnabled : !!DEFAULTS.demoModeEnabled;
     demoModeSpinCountInput.value = clampCount(s.demoModeSpinCount || DEFAULTS.demoModeSpinCount, 1, 500);
@@ -375,6 +401,9 @@
       bonusPrizes: getPrizeValues(bonusPrizesEl).slice(0, bonusCount),
       featureSliceCountMin: featureMin,
       featureSliceCountMax: featureMax,
+      truffleMultiplierEnabled: truffleMultiplierEnabledInput.checked,
+      truffleRespinEnabled: truffleRespinEnabledInput.checked,
+      truffleRespinPlusEnabled: truffleRespinPlusEnabledInput.checked,
       demoModeEnabled: demoModeEnabledInput.checked,
       demoModeSpinCount: clampCount(demoModeSpinCountInput.value, 1, 500)
     };
