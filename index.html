@@ -81,6 +81,11 @@
   .log-entry .who { color: #ffd95a; font-weight: 700; }
   .log-entry .when { color: #8f887c; font-size: 0.76rem; display: block; margin-top: 2px; }
   .top-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .outcome-row { display: grid; grid-template-columns: 24px 1fr 90px; align-items: center; gap: 10px; margin: 8px 0; }
+  .outcome-row.nested { grid-template-columns: 24px 44px 1fr 90px; }
+  .outcome-row input[type="checkbox"] { width: auto; }
+  .outcome-row input[type="number"] { text-align: center; }
+  .outcome-header { color: #bfb7ac; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.03em; }
 </style>
 </head>
 <body>
@@ -142,19 +147,27 @@
           <input id="featureMax" type="number" min="1" max="9" step="1" />
         </label>
       </div>
-      <p class="hint">Turn any of these off to remove that outcome entirely - the remaining ticked ones share the chance.</p>
-      <label style="display:flex; align-items:center; gap:8px; flex-direction:row;">
-        <input id="truffleMultiplierEnabled" type="checkbox" style="width:auto;" />
-        <span>Multiplier</span>
-      </label>
-      <label style="display:flex; align-items:center; gap:8px; flex-direction:row;">
-        <input id="truffleRespinEnabled" type="checkbox" style="width:auto;" />
+      <h2>Outcomes</h2>
+      <p class="hint">Turn any of these off to remove that outcome entirely - the remaining ticked ones share the chance. "How Often" is just a comparison number between the ticked outcomes - equal numbers land equally often, a higher number lands more often, and 0 turns that one off without unticking it.</p>
+
+      <div class="outcome-row outcome-header"><span></span><span>Outcome</span><span>How Often</span></div>
+
+      <div class="outcome-row">
+        <input id="truffleRespinEnabled" type="checkbox" />
         <span>Respin</span>
-      </label>
-      <label style="display:flex; align-items:center; gap:8px; flex-direction:row;">
-        <input id="truffleRespinPlusEnabled" type="checkbox" style="width:auto;" />
+        <input id="respinFrequency" type="number" min="0" max="20" step="1" />
+      </div>
+      <div class="outcome-row">
+        <input id="truffleRespinPlusEnabled" type="checkbox" />
         <span>Respin Plus</span>
-      </label>
+        <input id="respinPlusFrequency" type="number" min="0" max="20" step="1" />
+      </div>
+      <div class="outcome-row">
+        <input id="truffleMultiplierEnabled" type="checkbox" />
+        <span>Multiplier</span>
+        <span></span>
+      </div>
+      <div id="multiplierOutcomeRows"></div>
     </div>
 
 
@@ -256,6 +269,9 @@
   const truffleMultiplierEnabledInput = document.getElementById("truffleMultiplierEnabled");
   const truffleRespinEnabledInput = document.getElementById("truffleRespinEnabled");
   const truffleRespinPlusEnabledInput = document.getElementById("truffleRespinPlusEnabled");
+  const respinFrequencyInput = document.getElementById("respinFrequency");
+  const respinPlusFrequencyInput = document.getElementById("respinPlusFrequency");
+  const multiplierOutcomeRowsEl = document.getElementById("multiplierOutcomeRows");
   const demoModeEnabledInput = document.getElementById("demoModeEnabled");
   const demoModeSpinCountInput = document.getElementById("demoModeSpinCount");
 
@@ -272,6 +288,12 @@
     truffleMultiplierEnabled: true,
     truffleRespinEnabled: true,
     truffleRespinPlusEnabled: true,
+    respinFrequency: 1,
+    respinPlusFrequency: 0,
+    multiplierValueMin: 2,
+    multiplierValueMax: 5,
+    multiplierValueEnabled: [true, true, true, true],
+    multiplierValueFrequency: [1, 1, 1, 1],
     demoModeEnabled: false,
     demoModeSpinCount: 20
   };
@@ -334,6 +356,49 @@
     renderPrizeInputs(container, count, existing, isBonus);
   }
 
+  // Multiplier Min/Max isn't something the venue can change here (it's tied to artwork set up in
+  // Unity - see schema.sql) - this just draws one tick+How-Often row per value in that range. A
+  // shorter/missing enabled/frequency array (e.g. the very first time this runs against a venue
+  // that predates this feature) falls back to enabled/1 per value, same as the game itself does.
+  function renderMultiplierRows(min, max, enabledValues, frequencyValues) {
+    multiplierOutcomeRowsEl.innerHTML = "";
+    for (let i = 0; i < Math.max(0, max - min + 1); i++) {
+      const value = min + i;
+      const row = document.createElement("div");
+      row.className = "outcome-row nested";
+
+      const spacer = document.createElement("span");
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "multiplier-enabled";
+      checkbox.checked = (enabledValues && enabledValues[i] !== undefined && enabledValues[i] !== null) ? !!enabledValues[i] : true;
+
+      const label = document.createElement("span");
+      label.textContent = value + "x";
+
+      const freqInput = document.createElement("input");
+      freqInput.type = "number";
+      freqInput.min = "0";
+      freqInput.max = "20";
+      freqInput.step = "1";
+      freqInput.className = "multiplier-frequency";
+      freqInput.value = (frequencyValues && frequencyValues[i] !== undefined && frequencyValues[i] !== null) ? frequencyValues[i] : 1;
+
+      row.appendChild(spacer);
+      row.appendChild(checkbox);
+      row.appendChild(label);
+      row.appendChild(freqInput);
+      multiplierOutcomeRowsEl.appendChild(row);
+    }
+  }
+
+  function getMultiplierRowValues() {
+    const enabled = Array.from(multiplierOutcomeRowsEl.querySelectorAll(".multiplier-enabled")).map((el) => el.checked);
+    const frequency = Array.from(multiplierOutcomeRowsEl.querySelectorAll(".multiplier-frequency")).map((el) => Math.max(0, parseInt(el.value, 10) || 0));
+    return { enabled, frequency };
+  }
+
   function populateForm(data) {
     const s = data || DEFAULTS;
     venueNameInput.textContent = s.venueName || DEFAULTS.venueName;
@@ -355,6 +420,15 @@
       ? !!s.truffleRespinEnabled : !!DEFAULTS.truffleRespinEnabled;
     truffleRespinPlusEnabledInput.checked = (s.truffleRespinPlusEnabled !== undefined && s.truffleRespinPlusEnabled !== null)
       ? !!s.truffleRespinPlusEnabled : !!DEFAULTS.truffleRespinPlusEnabled;
+
+    respinFrequencyInput.value = (s.respinFrequency !== undefined && s.respinFrequency !== null) ? s.respinFrequency : DEFAULTS.respinFrequency;
+    respinPlusFrequencyInput.value = (s.respinPlusFrequency !== undefined && s.respinPlusFrequency !== null) ? s.respinPlusFrequency : DEFAULTS.respinPlusFrequency;
+    renderMultiplierRows(
+      s.multiplierValueMin || DEFAULTS.multiplierValueMin,
+      s.multiplierValueMax || DEFAULTS.multiplierValueMax,
+      s.multiplierValueEnabled || DEFAULTS.multiplierValueEnabled,
+      s.multiplierValueFrequency || DEFAULTS.multiplierValueFrequency
+    );
 
     demoModeEnabledInput.checked = (s.demoModeEnabled !== undefined && s.demoModeEnabled !== null)
       ? !!s.demoModeEnabled : !!DEFAULTS.demoModeEnabled;
@@ -390,6 +464,7 @@
 
     const normalCount = clampCount(normalSliceCountInput.value, 2, 64);
     const bonusCount = clampCount(bonusSliceCountInput.value, 2, 64);
+    const multiplierRows = getMultiplierRowValues();
 
     // No longer includes venueName - it's a fixed heading now, not editable, so there's nothing to
     // send here. Leaving it out of the payload means update_venue_settings_by_token's own
@@ -404,6 +479,10 @@
       truffleMultiplierEnabled: truffleMultiplierEnabledInput.checked,
       truffleRespinEnabled: truffleRespinEnabledInput.checked,
       truffleRespinPlusEnabled: truffleRespinPlusEnabledInput.checked,
+      respinFrequency: Math.max(0, parseInt(respinFrequencyInput.value, 10) || 0),
+      respinPlusFrequency: Math.max(0, parseInt(respinPlusFrequencyInput.value, 10) || 0),
+      multiplierValueEnabled: multiplierRows.enabled,
+      multiplierValueFrequency: multiplierRows.frequency,
       demoModeEnabled: demoModeEnabledInput.checked,
       demoModeSpinCount: clampCount(demoModeSpinCountInput.value, 1, 500)
     };
