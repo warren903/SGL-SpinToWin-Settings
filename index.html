@@ -121,6 +121,14 @@
     </div>
 
     <div class="card">
+      <h2 style="margin-top:0">Game Start</h2>
+      <p class="hint">How long the wheel sits idle (gently spinning, with a "Game Starting in..." countdown) before Hit to Spin appears for the very first round of a session.</p>
+      <label>Delay (seconds)
+        <input id="gameStartDelaySeconds" type="number" min="0" max="120" step="1" />
+      </label>
+    </div>
+
+    <div class="card">
       <h2 style="margin-top:0">Normal Wheel</h2>
       <label>Number of slices
         <input id="normalSliceCount" type="number" min="2" max="64" step="1" />
@@ -269,6 +277,7 @@
   const bonusSliceCountInput = document.getElementById("bonusSliceCount");
   const normalPrizesEl = document.getElementById("normalPrizes");
   const bonusPrizesEl = document.getElementById("bonusPrizes");
+  const gameStartDelaySecondsInput = document.getElementById("gameStartDelaySeconds");
   const featureMinInput = document.getElementById("featureMin");
   const featureMaxInput = document.getElementById("featureMax");
   const truffleMultiplierEnabledInput = document.getElementById("truffleMultiplierEnabled");
@@ -284,6 +293,7 @@
   // column defaults, so "Reset to Defaults" below reverts to the actual live setup, not a placeholder.
   const DEFAULTS = {
     venueName: "New Venue",
+    gameStartDelaySeconds: 15,
     normalSliceCount: 10,
     bonusSliceCount: 4,
     normalPrizes: ["BONUS","$20","$30","$40","$50","$60","$70","$80","$90","$100"],
@@ -409,6 +419,8 @@
     venueNameInput.textContent = s.venueName || DEFAULTS.venueName;
     lastUpdatedDisplay.textContent = s.updatedAt ? ("Last updated " + new Date(s.updatedAt).toLocaleString()) : "";
 
+    gameStartDelaySecondsInput.value = clampCount(s.gameStartDelaySeconds || DEFAULTS.gameStartDelaySeconds, 0, 120);
+
     normalSliceCountInput.value = clampCount(s.normalSliceCount || DEFAULTS.normalSliceCount, 2, 64);
     bonusSliceCountInput.value = clampCount(s.bonusSliceCount || DEFAULTS.bonusSliceCount, 2, 64);
     renderPrizeInputs(normalPrizesEl, parseInt(normalSliceCountInput.value, 10), s.normalPrizes || DEFAULTS.normalPrizes, false);
@@ -475,6 +487,7 @@
     // send here. Leaving it out of the payload means update_venue_settings_by_token's own
     // coalesce(settings->>'venueName', v.venue_name) just keeps whatever's already stored.
     const settings = {
+      gameStartDelaySeconds: clampCount(gameStartDelaySecondsInput.value, 0, 120),
       normalSliceCount: normalCount,
       bonusSliceCount: bonusCount,
       normalPrizes: getPrizeValues(normalPrizesEl).slice(0, normalCount),
