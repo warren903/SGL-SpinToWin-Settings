@@ -129,6 +129,14 @@
     </div>
 
     <div class="card">
+      <h2 style="margin-top:0">Screensaver</h2>
+      <p class="hint">How long the wheel sits idle at Hit to Spin (nobody clicking) before the attract-mode screensaver video takes over.</p>
+      <label>Idle Trigger (seconds)
+        <input id="screensaverIdleTriggerSeconds" type="number" min="0" max="600" step="1" />
+      </label>
+    </div>
+
+    <div class="card">
       <h2 style="margin-top:0">Normal Wheel</h2>
       <label>Number of slices
         <input id="normalSliceCount" type="number" min="2" max="64" step="1" />
@@ -278,6 +286,7 @@
   const normalPrizesEl = document.getElementById("normalPrizes");
   const bonusPrizesEl = document.getElementById("bonusPrizes");
   const gameStartDelaySecondsInput = document.getElementById("gameStartDelaySeconds");
+  const screensaverIdleTriggerSecondsInput = document.getElementById("screensaverIdleTriggerSeconds");
   const featureMinInput = document.getElementById("featureMin");
   const featureMaxInput = document.getElementById("featureMax");
   const truffleMultiplierEnabledInput = document.getElementById("truffleMultiplierEnabled");
@@ -294,6 +303,7 @@
   const DEFAULTS = {
     venueName: "New Venue",
     gameStartDelaySeconds: 15,
+    screensaverIdleTriggerSeconds: 20,
     normalSliceCount: 10,
     bonusSliceCount: 4,
     normalPrizes: ["BONUS","$20","$30","$40","$50","$60","$70","$80","$90","$100"],
@@ -420,6 +430,7 @@
     lastUpdatedDisplay.textContent = s.updatedAt ? ("Last updated " + new Date(s.updatedAt).toLocaleString()) : "";
 
     gameStartDelaySecondsInput.value = clampCount(s.gameStartDelaySeconds || DEFAULTS.gameStartDelaySeconds, 0, 120);
+    screensaverIdleTriggerSecondsInput.value = clampCount(s.screensaverIdleTriggerSeconds || DEFAULTS.screensaverIdleTriggerSeconds, 0, 600);
 
     normalSliceCountInput.value = clampCount(s.normalSliceCount || DEFAULTS.normalSliceCount, 2, 64);
     bonusSliceCountInput.value = clampCount(s.bonusSliceCount || DEFAULTS.bonusSliceCount, 2, 64);
@@ -488,6 +499,7 @@
     // coalesce(settings->>'venueName', v.venue_name) just keeps whatever's already stored.
     const settings = {
       gameStartDelaySeconds: clampCount(gameStartDelaySecondsInput.value, 0, 120),
+      screensaverIdleTriggerSeconds: clampCount(screensaverIdleTriggerSecondsInput.value, 0, 600),
       normalSliceCount: normalCount,
       bonusSliceCount: bonusCount,
       normalPrizes: getPrizeValues(normalPrizesEl).slice(0, normalCount),
